@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment - Hospital Booking System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Book Appointment</h1>
+            <p>Schedule your appointment with the hospital</p>
+        </div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">← Back to Hospitals</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="container">
+            <div class="form-container">
+                <div id="hospitalInfo" class="hospital-info">
+                    <!-- Hospital information will be loaded here -->
+                </div>
+
+                <h2>Patient Information</h2>
+                <form id="appointmentForm" action="backend/book-appointment.php" method="POST">
+                    <input type="hidden" id="hospitalId" name="hospital_id">
+                    
+                    <div class="form-group">
+                        <label for="patientName">Patient Name *</label>
+                        <input type="text" id="patientName" name="patient_name" required>
+                        <span class="error" id="patientNameError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phoneNumber">Phone Number *</label>
+                        <input type="tel" id="phoneNumber" name="phone_number" required>
+                        <span class="error" id="phoneNumberError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="appointmentDate">Appointment Date *</label>
+                        <input type="date" id="appointmentDate" name="appointment_date" required>
+                        <span class="error" id="appointmentDateError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="appointmentTime">Appointment Time *</label>
+                        <input type="time" id="appointmentTime" name="appointment_time" required>
+                        <span class="error" id="appointmentTimeError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn">Book Appointment</button>
+                        <button type="button" onclick="window.location.href='index.html'" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </form>
+
+                <div id="message" class="message" style="display: none;"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/validation.js"></script>
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const hospitalId = urlParams.get('hospital_id');
+        const hospitalName = urlParams.get('hospital_name');
+
+        // Load hospital information when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            if (hospitalId && hospitalName) {
+                loadHospitalInfo(hospitalId, hospitalName);
+                document.getElementById('hospitalId').value = hospitalId;
+            } else {
+                // Redirect to home if no hospital ID provided
+                window.location.href = 'index.html';
+            }
+        });
+
+        function loadHospitalInfo(hospitalId, hospitalName) {
+            const hospitalInfo = document.getElementById('hospitalInfo');
+            
+            // Fetch hospital details
+            fetch(`backend/get-hospital-details.php?id=${hospitalId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const hospital = data.hospital;
+                        hospitalInfo.innerHTML = `
+                            <div class="hospital-card">
+                                <h3>${hospital.hospital_name}</h3>
+                                <div class="specialization">${hospital.specialization}</div>
+                                <div class="info">
+                                    <strong>Address:</strong> ${hospital.address}
+                                </div>
+                                <div class="info">
+                                    <strong>Phone:</strong> ${hospital.phone_number}
+                                </div>
+                                <div class="info">
+                                    <strong>Available Days:</strong> ${hospital.available_days}
+                                </div>
+                                <div class="info">
+                                    <strong>Timings:</strong> ${hospital.available_timings}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        hospitalInfo.innerHTML = `
+                            <div class="error">
+                                Error loading hospital information. Please go back and try again.
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading hospital details:', error);
+                    hospitalInfo.innerHTML = `
+                        <div class="error">
+                            Error loading hospital information. Please go back and try again.
+                        </div>
+                    `;
+                });
+        }
+
+        // Handle form submission
+        document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (validateAppointmentForm()) {
+                // Submit form using fetch for better UX
+                const formData = new FormData(this);
+                
+                fetch('backend/book-appointment.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const messageDiv = document.getElementById('message');
+                    
+                    if (data.success) {
+                        messageDiv.className = 'message success';
+                        messageDiv.textContent = data.message;
+                        messageDiv.style.display = 'block';
+                        
+                        // Reset form after successful booking
+                        this.reset();
+                        
+                        // Redirect to home after 3 seconds
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 3000);
+                    } else {
+                        messageDiv.className = 'message error';
+                        messageDiv.textContent = data.message;
+                        messageDiv.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error booking appointment:', error);
+                    const messageDiv = document.getElementById('message');
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = 'Error booking appointment. Please try again.';
+                    messageDiv.style.display = 'block';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

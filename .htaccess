@@ -1,0 +1,92 @@
+# Hospital Booking System - Apache Configuration
+
+# Enable URL rewriting
+RewriteEngine On
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self'"
+</IfModule>
+
+# Hide .htaccess file
+<Files .htaccess>
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Protect configuration files
+<FilesMatch "\.(conf|config|ini|log|php)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect sensitive directories
+<Directory "config">
+    Order allow,deny
+    Deny from all
+</Directory>
+
+<Directory "logs">
+    Order allow,deny
+    Deny from all
+</Directory>
+
+<Directory "database">
+    Order allow,deny
+    Deny from all
+</Directory>
+
+# PHP settings
+<IfModule mod_php7.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_value error_log logs/php_errors.log
+    php_value max_execution_time 30
+    php_value upload_max_filesize 2M
+    php_value post_max_size 8M
+</IfModule>
+
+<IfModule mod_php8.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_value error_log logs/php_errors.log
+    php_value max_execution_time 30
+    php_value upload_max_filesize 2M
+    php_value post_max_size 8M
+</IfModule>
+
+# Cache static files
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+</IfModule>
+
+# Compress output
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>
+
+# Default index file
+DirectoryIndex index.html
+
+# Custom error pages
+ErrorDocument 404 /404.html
+ErrorDocument 500 /500.html

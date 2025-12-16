@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Hospital - Admin Panel</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Admin Panel</h1>
+            <p>Register New Hospital</p>
+        </div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="../index.html">← Back to Home</a></li>
+            <li><a href="register-hospital.html">Register Hospital</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="container">
+            <div class="form-container">
+                <h2>Hospital Registration Form</h2>
+                <form id="hospitalForm" action="../backend/register-hospital.php" method="POST">
+                    <div class="form-group">
+                        <label for="hospitalName">Hospital Name *</label>
+                        <input type="text" id="hospitalName" name="hospital_name" required>
+                        <span class="error" id="hospitalNameError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address">Address *</label>
+                        <textarea id="address" name="address" rows="3" required></textarea>
+                        <span class="error" id="addressError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phoneNumber">Phone Number *</label>
+                        <input type="tel" id="phoneNumber" name="phone_number" required>
+                        <span class="error" id="phoneNumberError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" name="email" required>
+                        <span class="error" id="emailError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="specialization">Specialization *</label>
+                        <input type="text" id="specialization" name="specialization" required>
+                        <span class="error" id="specializationError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="availableDays">Available Days *</label>
+                        <input type="text" id="availableDays" name="available_days" placeholder="e.g., Mon-Fri, Mon-Sat" required>
+                        <span class="error" id="availableDaysError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="availableTimings">Available Timings *</label>
+                        <input type="text" id="availableTimings" name="available_timings" placeholder="e.g., 9:00 AM - 6:00 PM" required>
+                        <span class="error" id="availableTimingsError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn">Register Hospital</button>
+                        <button type="reset" class="btn btn-secondary">Clear Form</button>
+                    </div>
+                </form>
+
+                <div id="message" class="message" style="display: none;"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/validation.js"></script>
+    <script>
+        // Initialize form validation when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hospital registration form
+            const hospitalForm = document.getElementById('hospitalForm');
+            if (hospitalForm) {
+                hospitalForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    if (validateHospitalForm()) {
+                        // Submit form using fetch for better UX
+                        const formData = new FormData(this);
+                        
+                        fetch('../backend/register-hospital.php', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                showMessage(data.message, 'success');
+                                this.reset();
+                            } else {
+                                if (data.errors && data.errors.length > 0) {
+                                    // Display individual field errors
+                                    data.errors.forEach(error => {
+                                        if (error.includes('name')) {
+                                            document.getElementById('hospitalNameError').textContent = error;
+                                        } else if (error.includes('address')) {
+                                            document.getElementById('addressError').textContent = error;
+                                        } else if (error.includes('phone')) {
+                                            document.getElementById('phoneNumberError').textContent = error;
+                                        } else if (error.includes('email')) {
+                                            document.getElementById('emailError').textContent = error;
+                                        } else if (error.includes('specialization')) {
+                                            document.getElementById('specializationError').textContent = error;
+                                        } else if (error.includes('days')) {
+                                            document.getElementById('availableDaysError').textContent = error;
+                                        } else if (error.includes('timings')) {
+                                            document.getElementById('availableTimingsError').textContent = error;
+                                        } else {
+                                            showMessage(error, 'error');
+                                        }
+                                    });
+                                } else {
+                                    showMessage(data.message, 'error');
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error registering hospital:', error);
+                            showMessage('Error registering hospital. Please try again.', 'error');
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

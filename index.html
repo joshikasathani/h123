@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Appointment Booking System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Hospital Appointment Booking</h1>
+            <p>Find and book appointments with trusted healthcare providers</p>
+        </div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="admin/register-hospital.html">Admin Panel</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="container">
+            <div class="section-header">
+                <h2>Available Hospitals</h2>
+                <p>Choose from our network of trusted healthcare providers</p>
+            </div>
+
+            <div class="hospitals-grid" id="hospitalsGrid">
+                <!-- Hospitals will be loaded here dynamically -->
+            </div>
+
+            <div class="loading" id="loading" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i>
+                Loading hospitals...
+            </div>
+
+            <div class="no-results" id="noResults" style="display: none;">
+                <i class="fas fa-hospital"></i>
+                <h3>No hospitals found</h3>
+                <p>Please check back later or contact admin to add hospitals</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/validation.js"></script>
+    <script>
+        // Load hospitals when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHospitals();
+        });
+
+        function loadHospitals() {
+            const hospitalsGrid = document.getElementById('hospitalsGrid');
+            const loading = document.getElementById('loading');
+            const noResults = document.getElementById('noResults');
+            
+            // Show loading
+            loading.style.display = 'block';
+            hospitalsGrid.innerHTML = '';
+            noResults.style.display = 'none';
+            
+            fetch('backend/get-hospitals.php')
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = 'none';
+                    
+                    if (data.success && data.hospitals.length > 0) {
+                        displayHospitals(data.hospitals);
+                    } else {
+                        noResults.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    noResults.style.display = 'block';
+                    console.error('Error loading hospitals:', error);
+                });
+        }
+
+        function displayHospitals(hospitals) {
+            const hospitalsGrid = document.getElementById('hospitalsGrid');
+            
+            hospitalsGrid.innerHTML = hospitals.map(hospital => `
+                <div class="hospital-card">
+                    <h3>${hospital.hospital_name}</h3>
+                    <div class="specialization">${hospital.specialization}</div>
+                    <div class="info">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>${hospital.address}</span>
+                    </div>
+                    <div class="info">
+                        <i class="fas fa-phone"></i>
+                        <span>${hospital.phone_number}</span>
+                    </div>
+                    <div class="info">
+                        <i class="fas fa-envelope"></i>
+                        <span>${hospital.email}</span>
+                    </div>
+                    <div class="info">
+                        <i class="fas fa-calendar"></i>
+                        <span>${hospital.available_days}</span>
+                    </div>
+                    <div class="info">
+                        <i class="fas fa-clock"></i>
+                        <span>${hospital.available_timings}</span>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button onclick="bookAppointment(${hospital.id}, '${hospital.hospital_name}')" class="btn">
+                            <i class="fas fa-calendar-plus"></i>
+                            Book Appointment
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function bookAppointment(hospitalId, hospitalName) {
+            // Redirect to appointment booking page with hospital ID
+            window.location.href = `book-appointment.html?hospital_id=${hospitalId}&hospital_name=${encodeURIComponent(hospitalName)}`;
+        }
+    </script>
+</body>
+</html>

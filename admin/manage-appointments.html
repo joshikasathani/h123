@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Appointments - Admin Panel</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Admin Panel</h1>
+            <p>Manage Appointments and Payments</p>
+        </div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="../index.html">← Back to Home</a></li>
+            <li><a href="register-hospital.html">Register Hospital</a></li>
+            <li><a href="manage-appointments.html">Manage Appointments</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="container">
+            <div class="section-header">
+                <h2>Appointments Management</h2>
+                <p>Update treatment status and process payments</p>
+            </div>
+
+            <div class="appointments-container">
+                <div class="filters">
+                    <select id="hospitalFilter" onchange="loadAppointments()">
+                        <option value="">All Hospitals</option>
+                    </select>
+                    <select id="statusFilter" onchange="loadAppointments()">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <select id="treatmentFilter" onchange="loadAppointments()">
+                        <option value="">All Treatment Status</option>
+                        <option value="pending">Treatment Pending</option>
+                        <option value="completed">Treatment Completed</option>
+                        <option value="cancelled">Treatment Cancelled</option>
+                    </select>
+                </div>
+
+                <div class="appointments-grid" id="appointmentsGrid">
+                    <!-- Appointments will be loaded here dynamically -->
+                </div>
+
+                <div class="loading" id="loading" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    Loading appointments...
+                </div>
+
+                <div class="no-results" id="noResults" style="display: none;">
+                    <i class="fas fa-calendar"></i>
+                    <h3>No appointments found</h3>
+                    <p>Try adjusting your filters</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/validation.js"></script>
+    <script>
+        // Load appointments when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHospitals();
+            loadAppointments();
+        });
+
+        function loadHospitals() {
+            fetch('../backend/get-hospitals.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const hospitalFilter = document.getElementById('hospitalFilter');
+                        data.hospitals.forEach(hospital => {
+                            const option = document.createElement('option');
+                            option.value = hospital.id;
+                            option.textContent = hospital.hospital_name;
+                            hospitalFilter.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error loading hospitals:', error));
+        }
+
+        function loadAppointments() {
+            const appointmentsGrid = document.getElementById('appointmentsGrid');
+            const loading = document.getElementById('loading');
+            const noResults = document.getElementById('noResults');
+            
+            // Show loading
+            loading.style.display = 'block';
+            appointmentsGrid.innerHTML = '';
+            noResults.style.display = 'none';
+            
+            const hospitalFilter = document.getElementById('hospitalFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const treatmentFilter = document.getElementById('treatmentFilter').value;
+            
+            let url = '../backend/get-all-appointments.php';
+            const params = new URLSearchParams();
+            
+            if (hospitalFilter) params.append('hospital_id', hospitalFilter);
+            if (statusFilter) params.append('status', statusFilter);
+            if (treatmentFilter) params.append('treatment_status', treatmentFilter);
+            
+            if (params.toString()) {
+                url += '?' + params.toString();
+            }
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = 'none';
+                    
+                    if (data.success && data.appointments.length > 0) {
+                        displayAppointments(data.appointments);
+                    } else {
+                        noResults.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    noResults.style.display = 'block';
+                    console.error('Error loading appointments:', error);
+                });
+        }
+
+        function displayAppointments(appointments) {
+            const appointmentsGrid = document.getElementById('appointmentsGrid');
+            
+            appointmentsGrid.innerHTML = appointments.map(appointment => `
+                <div class="appointment-card">
+                    <div class="appointment-header">
+                        <h3>${appointment.patient_name}</h3>
+                        <span class="status ${appointment.status}">${appointment.status}</span>
+                    </div>
+                    
+                    <div class="appointment-details">
+                        <div class="info">
+                            <i class="fas fa-hospital"></i>
+                            <span>${appointment.hospital_name}</span>
+                        </div>
+                        <div class="info">
+                            <i class="fas fa-phone"></i>
+                            <span>${appointment.phone_number}</span>
+                        </div>
+                        <div class="info">
+                            <i class="fas fa-calendar"></i>
+                            <span>${appointment.appointment_date}</span>
+                        </div>
+                        <div class="info">
+                            <i class="fas fa-clock"></i>
+                            <span>${appointment.appointment_time}</span>
+                        </div>
+                        <div class="info">
+                            <i class="fas fa-medkit"></i>
+                            <span>Treatment: <strong class="treatment-status ${appointment.treatment_status}">${appointment.treatment_status}</strong></span>
+                        </div>
+                    </div>
+                    
+                    <div class="appointment-actions">
+                        ${appointment.treatment_status === 'pending' ? `
+                            <button onclick="updateTreatmentStatus(${appointment.id}, 'completed')" class="btn btn-success">
+                                <i class="fas fa-check"></i> Mark Completed
+                            </button>
+                            <button onclick="updateTreatmentStatus(${appointment.id}, 'cancelled')" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel Treatment
+                            </button>
+                        ` : ''}
+                        
+                        ${appointment.treatment_status === 'completed' && !appointment.payment_processed ? `
+                            <button onclick="processPayment(${appointment.id})" class="btn">
+                                <i class="fas fa-credit-card"></i> Process Payment
+                            </button>
+                        ` : ''}
+                        
+                        ${appointment.payment_processed ? `
+                            <span class="payment-status paid">
+                                <i class="fas fa-check-circle"></i> Payment Processed
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateTreatmentStatus(appointmentId, status) {
+            const formData = new FormData();
+            formData.append('appointment_id', appointmentId);
+            formData.append('treatment_status', status);
+            
+            fetch('../backend/update-treatment-status.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    if (data.payment_url) {
+                        if (confirm('Treatment marked as completed. Would you like to process payment now?')) {
+                            window.location.href = '../' + data.payment_url;
+                        }
+                    }
+                    loadAppointments(); // Refresh the list
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating treatment status:', error);
+                alert('Error updating treatment status. Please try again.');
+            });
+        }
+
+        function processPayment(appointmentId) {
+            window.location.href = `../payment.html?appointment_id=${appointmentId}`;
+        }
+    </script>
+
+    <style>
+        .appointments-container {
+            margin: 2rem 0;
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filters select {
+            padding: 0.5rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            background: white;
+            min-width: 150px;
+        }
+
+        .appointments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .appointment-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .appointment-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .appointment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .appointment-header h3 {
+            color: #667eea;
+            margin: 0;
+        }
+
+        .appointment-details .info {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .treatment-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+
+        .treatment-status.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .treatment-status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .treatment-status.cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .appointment-actions {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 2px solid #f0f0f0;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .appointment-actions button {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .payment-status.paid {
+            color: #28a745;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .filters {
+                flex-direction: column;
+            }
+            
+            .filters select {
+                width: 100%;
+            }
+            
+            .appointments-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .appointment-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+</html>
