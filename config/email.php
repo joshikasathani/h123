@@ -1,39 +1,33 @@
 <?php
 /**
- * Email Configuration
- * 
- * This file contains email credentials and settings
- * for sending hospital registration confirmation emails.
- * 
- * IMPORTANT: Keep this file secure and never expose credentials on frontend
+ * Email Configuration - FIXED VERSION
+ * Enhanced with better error handling and fallback options
  */
 
 // Email Configuration
 $email_config = [
-    // SMTP Configuration
+    // SMTP Configuration - UPDATE THESE VALUES
     'smtp' => [
-        'host' => 'smtp.gmail.com',           // Replace with your SMTP host
-        'port' => 587,                         // SMTP port
-        'username' => 'your-email@gmail.com', // Replace with your email
-        'password' => 'your-app-password',    // Replace with your app password
-        'encryption' => 'tls',                // tls or ssl
-        'from_email' => 'your-email@gmail.com', // From email address
-        'from_name' => 'Hospital Booking System' // From name
+        'host' => 'smtp.gmail.com',           // Your SMTP host
+        'port' => 587,                         // SMTP port (587 for TLS, 465 for SSL)
+        'username' => 'your-actual-email@gmail.com', // UPDATE: Your real email
+        'password' => 'your-actual-app-password',    // UPDATE: Your app password
+        'encryption' => 'tls',                // 'tls' or 'ssl'
+        'from_email' => 'your-actual-email@gmail.com', // UPDATE: Same as username
+        'from_name' => 'Hospital Booking System'
     ],
     
     // Email settings
     'settings' => [
-        'enable_emails' => true,
-        'admin_email' => 'admin@hospitalbooking.com', // Admin notification email
+        'enable_emails' => true,              // Set to false to disable emails
+        'admin_email' => 'admin@hospitalbooking.com',
         'log_errors' => true,
         'log_file' => __DIR__ . '/../logs/emails.log'
     ]
 ];
 
 /**
- * Email Sender Class
- * 
- * Handles sending emails using PHPMailer or native PHP mail
+ * Email Sender Class - Enhanced
  */
 class EmailSender {
     private $config;
@@ -52,15 +46,21 @@ class EmailSender {
     }
     
     /**
-     * Send email
-     * 
-     * @param string $to Recipient email
-     * @param string $subject Email subject
-     * @param string $body Email body (HTML)
-     * @param string $altBody Alternative plain text body
-     * @return bool Success status
+     * Send email with enhanced error handling
      */
     public function sendEmail($to, $subject, $body, $altBody = '') {
+        // Check if emails are enabled
+        if (!$this->config['settings']['enable_emails']) {
+            $this->logError('Email sending is disabled in settings');
+            return false;
+        }
+        
+        // Validate email configuration
+        if ($this->config['smtp']['username'] === 'your-actual-email@gmail.com') {
+            $this->logError('Email configuration not updated - using placeholder credentials');
+            return false;
+        }
+        
         try {
             // Try to use PHPMailer if available
             if ($this->usePHPMailer()) {
@@ -88,7 +88,8 @@ class EmailSender {
         $mail = new PHPMailer\PHPMailer\PHPMailer(true);
         
         try {
-            // SMTP settings
+            // Server settings
+            $mail->SMTPDebug = 0;                    // Disable verbose debug
             $mail->isSMTP();
             $mail->Host = $this->config['smtp']['host'];
             $mail->SMTPAuth = true;
@@ -162,15 +163,10 @@ class EmailSender {
 
 /**
  * Convenience function to send email
- * 
- * @param string $to Recipient email
- * @param string $subject Email subject
- * @param string $body Email body (HTML)
- * @param string $altBody Alternative plain text body
- * @return bool Success status
  */
 function sendEmail($to, $subject, $body, $altBody = '') {
     $sender = new EmailSender();
     return $sender->sendEmail($to, $subject, $body, $altBody);
 }
+
 ?>

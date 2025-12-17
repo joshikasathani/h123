@@ -1,0 +1,9 @@
+[2025-12-17 12:33:29] SUCCESS: Registration attempt for hospital: Test Hospital, email: test@test.com
+[17-Dec-2025 12:33:29 Europe/Berlin] Table 'payments' created successfully
+[2025-12-17 12:33:29] SUCCESS: Hospital registered successfully. ID: 7, Name: Test Hospital
+[2025-12-17 12:33:29] ERROR: Email sending failed to: test@test.com
+[2025-12-17 12:44:32] SUCCESS: Registration attempt for hospital: Test Hospital, email: test@test.com
+[2025-12-17 12:44:32] ERROR: Duplicate email attempt: test@test.com
+[2025-12-17 12:46:52] SUCCESS: Registration attempt for hospital: New Test Hospital, email: newtest@test.com
+[2025-12-17 12:46:52] SUCCESS: Hospital registered successfully. ID: 8, Name: New Test Hospital
+[2025-12-17 12:46:52] ERROR: Email sending failed to: newtest@test.com
