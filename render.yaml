@@ -4,7 +4,8 @@ services:
     env: php
     plan: free
     buildCommand: ""
-    startCommand: "php -S 0.0.0.0:10000"
+    startCommand: "php -S 0.0.0.0:10000 -t ."
+    staticPublishPath: .
     envVars:
       - key: DB_HOST
         sync: false
