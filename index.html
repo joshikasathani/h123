@@ -63,22 +63,48 @@
             hospitalsGrid.innerHTML = '';
             noResults.style.display = 'none';
             
-            fetch('backend/get-hospitals.php')
-                .then(response => response.json())
-                .then(data => {
-                    loading.style.display = 'none';
-                    
-                    if (data.success && data.hospitals.length > 0) {
-                        displayHospitals(data.hospitals);
-                    } else {
-                        noResults.style.display = 'block';
+            // Use demo data for Vercel deployment
+            setTimeout(() => {
+                loading.style.display = 'none';
+                
+                // Demo hospital data
+                const demoHospitals = [
+                    {
+                        id: 1,
+                        hospital_name: "City General Hospital",
+                        email: "info@citygeneral.com",
+                        phone: "+1-555-0101",
+                        address: "123 Main St, City, State 12345",
+                        specialization: "General Medicine, Emergency Care"
+                    },
+                    {
+                        id: 2,
+                        hospital_name: "Heart & Vascular Center",
+                        email: "contact@heartcenter.com", 
+                        phone: "+1-555-0102",
+                        address: "456 Oak Ave, City, State 12345",
+                        specialization: "Cardiology, Vascular Surgery"
+                    },
+                    {
+                        id: 3,
+                        hospital_name: "Children's Medical Center",
+                        email: "info@childrensmed.com",
+                        phone: "+1-555-0103", 
+                        address: "789 Park Dr, City, State 12345",
+                        specialization: "Pediatrics, Neonatal Care"
+                    },
+                    {
+                        id: 4,
+                        hospital_name: "Orthopedic & Sports Medicine",
+                        email: "appointments@orthosports.com",
+                        phone: "+1-555-0104",
+                        address: "321 Sports Blvd, City, State 12345", 
+                        specialization: "Orthopedics, Sports Medicine"
                     }
-                })
-                .catch(error => {
-                    loading.style.display = 'none';
-                    noResults.style.display = 'block';
-                    console.error('Error loading hospitals:', error);
-                });
+                ];
+                
+                displayHospitals(demoHospitals);
+            }, 1000);
         }
 
         function displayHospitals(hospitals) {
@@ -94,19 +120,11 @@
                     </div>
                     <div class="info">
                         <i class="fas fa-phone"></i>
-                        <span>${hospital.phone_number}</span>
+                        <span>${hospital.phone}</span>
                     </div>
                     <div class="info">
                         <i class="fas fa-envelope"></i>
                         <span>${hospital.email}</span>
-                    </div>
-                    <div class="info">
-                        <i class="fas fa-calendar"></i>
-                        <span>${hospital.available_days}</span>
-                    </div>
-                    <div class="info">
-                        <i class="fas fa-clock"></i>
-                        <span>${hospital.available_timings}</span>
                     </div>
                     <div style="margin-top: 1rem;">
                         <button onclick="bookAppointment(${hospital.id}, '${hospital.hospital_name}')" class="btn">
