@@ -1,0 +1,4 @@
+[2025-12-17 14:05:12] SUCCESS: Appointment booking attempt: Hospital ID 2, Patient: John Doe
+[17-Dec-2025 14:05:12 Europe/Berlin] SQLite database tables created/verified successfully
+[2025-12-17 14:05:12] SUCCESS: Appointment booked successfully. ID: 1, Hospital: API Test Hospital
+[2025-12-17 14:05:13] ERROR: WhatsApp sending failed for appointment ID 1

@@ -1,0 +1,39 @@
+[17-Dec-2025 13:56:36 Europe/Berlin] PHP Warning:  require_once(../config/database.php): Failed to open stream: No such file or directory in E:\appointment_booking\backend\get-hospitals.php on line 38
+[17-Dec-2025 13:56:36 Europe/Berlin] PHP Fatal error:  Uncaught Error: Failed opening required '../config/database.php' (include_path='C:\xampp\php\PEAR') in E:\appointment_booking\backend\get-hospitals.php:38
+Stack trace:
+#0 {main}
+  thrown in E:\appointment_booking\backend\get-hospitals.php on line 38
+[17-Dec-2025 14:00:07 Europe/Berlin] PHP Warning:  require_once(../config/database.php): Failed to open stream: No such file or directory in E:\appointment_booking\backend\get-hospitals.php on line 38
+[17-Dec-2025 14:00:07 Europe/Berlin] PHP Fatal error:  Uncaught Error: Failed opening required '../config/database.php' (include_path='C:\xampp\php\PEAR') in E:\appointment_booking\backend\get-hospitals.php:38
+Stack trace:
+#0 {main}
+  thrown in E:\appointment_booking\backend\get-hospitals.php on line 38
+[17-Dec-2025 14:02:55 Europe/Berlin] SQLite database tables created/verified successfully
+[17-Dec-2025 14:02:55 Europe/Berlin] PHP Warning:  Undefined property: PDO::$connect_error in E:\appointment_booking\backend\get-hospitals.php on line 40
+[17-Dec-2025 14:02:55 Europe/Berlin] PHP Fatal error:  Uncaught Error: Call to undefined method PDO::select_db() in E:\appointment_booking\backend\get-hospitals.php:45
+Stack trace:
+#0 {main}
+  thrown in E:\appointment_booking\backend\get-hospitals.php on line 45
+[17-Dec-2025 14:03:01 Europe/Berlin] PHP Warning:  require_once(../config/database.php): Failed to open stream: No such file or directory in E:\appointment_booking\backend\get-hospitals.php on line 38
+[17-Dec-2025 14:03:01 Europe/Berlin] PHP Fatal error:  Uncaught Error: Failed opening required '../config/database.php' (include_path='C:\xampp\php\PEAR') in E:\appointment_booking\backend\get-hospitals.php:38
+Stack trace:
+#0 {main}
+  thrown in E:\appointment_booking\backend\get-hospitals.php on line 38
+[17-Dec-2025 14:03:42 Europe/Berlin] SQLite database tables created/verified successfully
+[17-Dec-2025 14:03:42 Europe/Berlin] PHP Warning:  Undefined property: PDO::$connect_error in E:\appointment_booking\backend\get-hospitals.php on line 40
+[17-Dec-2025 14:03:42 Europe/Berlin] PHP Fatal error:  Uncaught Error: Call to undefined method PDO::select_db() in E:\appointment_booking\backend\get-hospitals.php:45
+Stack trace:
+#0 {main}
+  thrown in E:\appointment_booking\backend\get-hospitals.php on line 45
+[17-Dec-2025 14:03:49 Europe/Berlin] PHP Warning:  require_once(../config/database.php): Failed to open stream: No such file or directory in E:\appointment_booking\backend\get-hospitals.php on line 38
+[17-Dec-2025 14:03:49 Europe/Berlin] PHP Fatal error:  Uncaught Error: Failed opening required '../config/database.php' (include_path='C:\xampp\php\PEAR') in E:\appointment_booking\backend\get-hospitals.php:38
+Stack trace:
+#0 {main}
+  thrown in E:\appointment_booking\backend\get-hospitals.php on line 38
+[17-Dec-2025 14:04:01 Europe/Berlin] PHP Warning:  require_once(../config/database.php): Failed to open stream: No such file or directory in E:\appointment_booking\backend\get-hospitals.php on line 38
+[17-Dec-2025 14:04:01 Europe/Berlin] PHP Fatal error:  Uncaught Error: Failed opening required '../config/database.php' (include_path='C:\xampp\php\PEAR') in E:\appointment_booking\backend\get-hospitals.php:38
+Stack trace:
+#0 {main}
+  thrown in E:\appointment_booking\backend\get-hospitals.php on line 38
+[17-Dec-2025 14:05:06 Europe/Berlin] SQLite database tables created/verified successfully
+[2025-12-17 14:05:06] SUCCESS: Fetched 2 hospitals

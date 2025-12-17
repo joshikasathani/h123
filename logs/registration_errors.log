@@ -7,3 +7,13 @@
 [2025-12-17 12:46:52] SUCCESS: Registration attempt for hospital: New Test Hospital, email: newtest@test.com
 [2025-12-17 12:46:52] SUCCESS: Hospital registered successfully. ID: 8, Name: New Test Hospital
 [2025-12-17 12:46:52] ERROR: Email sending failed to: newtest@test.com
+[17-Dec-2025 14:03:06 Europe/Berlin] PHP Warning:  Undefined array key "REQUEST_METHOD" in E:\appointment_booking\backend\register-hospital.php on line 54
+[2025-12-17 14:03:06] ERROR: Registration failed: Invalid request method. Only POST allowed.
+[2025-12-17 14:03:35] SUCCESS: Registration attempt for hospital: Test SQLite Hospital, email: test@sqlite.com
+[17-Dec-2025 14:03:35 Europe/Berlin] SQLite database tables created/verified successfully
+[2025-12-17 14:03:35] SUCCESS: Hospital registered successfully. ID: 1, Name: Test SQLite Hospital
+[2025-12-17 14:03:35] ERROR: Email sending failed to: test@sqlite.com
+[2025-12-17 14:05:00] SUCCESS: Registration attempt for hospital: API Test Hospital, email: api@test.com
+[17-Dec-2025 14:05:00 Europe/Berlin] SQLite database tables created/verified successfully
+[2025-12-17 14:05:00] SUCCESS: Hospital registered successfully. ID: 2, Name: API Test Hospital
+[2025-12-17 14:05:00] ERROR: Email sending failed to: api@test.com
