@@ -18,27 +18,20 @@ RewriteEngine On
     Deny from all
 </Files>
 
-# Protect configuration files
-<FilesMatch "\.(conf|config|ini|log|php)$">
+# Protect configuration files (excluding backend PHP files)
+<FilesMatch "\.(conf|config|ini|log)$">
     Order allow,deny
     Deny from all
 </FilesMatch>
 
-# Protect sensitive directories
-<Directory "config">
+# Protect specific sensitive PHP files
+<FilesMatch "^(database|email|whatsapp)\.php$">
     Order allow,deny
     Deny from all
-</Directory>
+</FilesMatch>
 
-<Directory "logs">
-    Order allow,deny
-    Deny from all
-</Directory>
-
-<Directory "database">
-    Order allow,deny
-    Deny from all
-</Directory>
+# Protect sensitive directories (Note: Directory directives not allowed in .htaccess)
+# These protections should be handled in Apache main config or by moving directories outside web root
 
 # PHP settings
 <IfModule mod_php7.c>
