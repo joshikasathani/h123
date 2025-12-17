@@ -1,45 +1,35 @@
 <?php
 /**
- * Database Configuration - FIXED VERSION
- * Enhanced with proper error handling and connection management
+ * Database Configuration - SQLITE VERSION
+ * Enhanced for Vercel deployment with SQLite
  */
 
 // Database Configuration
 $db_config = [
-    'host' => 'localhost',
-    'username' => 'root',
-    'password' => '',
-    'database' => 'hospital_booking',
-    'charset' => 'utf8mb4'
+    'type' => 'sqlite',
+    'database_path' => __DIR__ . '/../data/hospital_booking.db',
+    'charset' => 'utf8'
 ];
+
+// Create data directory if it doesn't exist
+$data_dir = dirname($db_config['database_path']);
+if (!is_dir($data_dir)) {
+    mkdir($data_dir, 0755, true);
+}
 
 // Create connection with error handling
 try {
-    $conn = new mysqli($db_config['host'], $db_config['username'], $db_config['password']);
+    $conn = new PDO("sqlite:" . $db_config['database_path']);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     
-    if ($conn->connect_error) {
-        throw new Exception("Database connection failed: " . $conn->connect_error);
-    }
+    // Enable foreign keys
+    $conn->exec("PRAGMA foreign_keys = ON");
     
-    // Set charset
-    $conn->set_charset($db_config['charset']);
+    // Create tables if they don't exist
+    createTables($conn);
     
-    // Check if database exists, create if not
-    $result = $conn->query("SHOW DATABASES LIKE '" . $db_config['database'] . "'");
-    if ($result->num_rows === 0) {
-        // Database doesn't exist, create it
-        if (!$conn->query("CREATE DATABASE `" . $db_config['database'] . "`")) {
-            throw new Exception("Failed to create database: " . $conn->error);
-        }
-        error_log("Database '" . $db_config['database'] . "' created successfully");
-    }
-    
-    // Select database
-    if (!$conn->select_db($db_config['database'])) {
-        throw new Exception("Failed to select database: " . $conn->error);
-    }
-    
-} catch (Exception $e) {
+} catch (PDOException $e) {
     error_log("Database initialization error: " . $e->getMessage());
     
     // For development, show error. For production, return null
@@ -50,145 +40,126 @@ try {
     }
 }
 
-/**
- * Execute prepared query safely
- */
-function executeQuery($conn, $sql, $params = [], $types = "") {
+// Create tables function
+function createTables($conn) {
     try {
-        $stmt = $conn->prepare($sql);
-        
-        if ($stmt === false) {
-            throw new Exception("Error preparing statement: " . $conn->error);
-        }
-        
-        if (!empty($params)) {
-            $stmt->bind_param($types, ...$params);
-        }
-        
-        if ($stmt->execute() === false) {
-            throw new Exception("Error executing statement: " . $stmt->error);
-        }
-        
-        return $stmt;
-        
-    } catch (Exception $e) {
-        error_log("Query execution error: " . $e->getMessage());
-        throw $e;
-    }
-}
-
-/**
- * Fetch multiple rows
- */
-function fetchAll($stmt) {
-    try {
-        $result = $stmt->get_result();
-        if ($result === false) {
-            throw new Exception("Error getting result set: " . $stmt->error);
-        }
-        return $result->fetch_all(MYSQLI_ASSOC);
-    } catch (Exception $e) {
-        error_log("Fetch all error: " . $e->getMessage());
-        return [];
-    }
-}
-
-/**
- * Fetch single row
- */
-function fetchOne($stmt) {
-    try {
-        $result = $stmt->get_result();
-        if ($result === false) {
-            throw new Exception("Error getting result set: " . $stmt->error);
-        }
-        return $result->fetch_assoc();
-    } catch (Exception $e) {
-        error_log("Fetch one error: " . $e->getMessage());
-        return null;
-    }
-}
-
-/**
- * Check if table exists
- */
-function tableExists($conn, $tableName) {
-    try {
-        $result = $conn->query("SHOW TABLES LIKE '" . $tableName . "'");
-        return $result->num_rows > 0;
-    } catch (Exception $e) {
-        error_log("Table check error: " . $e->getMessage());
-        return false;
-    }
-}
-
-/**
- * Create tables if they don't exist
- */
-function initializeTables($conn) {
-    $tables = [
-        "hospitals" => "
+        // Hospitals table
+        $conn->exec("
             CREATE TABLE IF NOT EXISTS hospitals (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                hospital_name VARCHAR(255) NOT NULL,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hospital_name TEXT NOT NULL,
                 address TEXT NOT NULL,
-                phone_number VARCHAR(20) NOT NULL,
-                email VARCHAR(255) NOT NULL UNIQUE,
-                specialization VARCHAR(255) NOT NULL,
-                available_days VARCHAR(255) NOT NULL,
-                available_timings VARCHAR(255) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            )",
+                phone_number TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                specialization TEXT NOT NULL,
+                available_days TEXT NOT NULL,
+                available_timings TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ");
         
-        "appointments" => "
+        // Appointments table
+        $conn->exec("
             CREATE TABLE IF NOT EXISTS appointments (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                hospital_id INT NOT NULL,
-                patient_name VARCHAR(255) NOT NULL,
-                phone_number VARCHAR(20) NOT NULL,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hospital_id INTEGER NOT NULL,
+                patient_name TEXT NOT NULL,
+                patient_phone TEXT NOT NULL,
                 appointment_date DATE NOT NULL,
                 appointment_time TIME NOT NULL,
-                status ENUM('pending', 'confirmed', 'cancelled') DEFAULT 'pending',
-                treatment_status ENUM('pending', 'completed', 'cancelled') DEFAULT 'pending',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (hospital_id) REFERENCES hospitals(id) ON DELETE CASCADE
-            )",
+                status TEXT DEFAULT 'pending',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (hospital_id) REFERENCES hospitals (id) ON DELETE CASCADE
+            )
+        ");
         
-        "payments" => "
+        // Payments table
+        $conn->exec("
             CREATE TABLE IF NOT EXISTS payments (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                appointment_id INT NOT NULL,
-                hospital_id INT NOT NULL,
-                patient_name VARCHAR(255) NOT NULL,
-                total_amount DECIMAL(10, 2) NOT NULL,
-                admin_amount DECIMAL(10, 2) NOT NULL,
-                hospital_amount DECIMAL(10, 2) NOT NULL,
-                admin_percentage DECIMAL(5, 2) DEFAULT 10.00,
-                hospital_percentage DECIMAL(5, 2) DEFAULT 90.00,
-                payment_method VARCHAR(50) DEFAULT 'cash',
-                payment_status ENUM('pending', 'paid', 'refunded') DEFAULT 'pending',
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                appointment_id INTEGER NOT NULL,
+                amount DECIMAL(10,2) NOT NULL,
+                payment_method TEXT NOT NULL,
+                payment_status TEXT DEFAULT 'pending',
+                transaction_id TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (appointment_id) REFERENCES appointments (id) ON DELETE CASCADE
+            )
+        ");
+        
+        // Admin revenue table
+        $conn->exec("
+            CREATE TABLE IF NOT EXISTS admin_revenue (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                appointment_id INTEGER NOT NULL,
+                commission_amount DECIMAL(10,2) NOT NULL,
                 payment_date DATE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE CASCADE,
-                FOREIGN KEY (hospital_id) REFERENCES hospitals(id) ON DELETE CASCADE
-            )"
-    ];
-    
-    foreach ($tables as $tableName => $sql) {
-        if (!tableExists($conn, $tableName)) {
-            if (!$conn->query($sql)) {
-                error_log("Failed to create table '$tableName': " . $conn->error);
-            } else {
-                error_log("Table '$tableName' created successfully");
-            }
-        }
+                status TEXT DEFAULT 'pending',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (appointment_id) REFERENCES appointments (id) ON DELETE CASCADE
+            )
+        ");
+        
+        // Hospital revenue table
+        $conn->exec("
+            CREATE TABLE IF NOT EXISTS hospital_revenue (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hospital_id INTEGER NOT NULL,
+                appointment_id INTEGER NOT NULL,
+                amount DECIMAL(10,2) NOT NULL,
+                payment_date DATE,
+                status TEXT DEFAULT 'pending',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (hospital_id) REFERENCES hospitals (id) ON DELETE CASCADE,
+                FOREIGN KEY (appointment_id) REFERENCES appointments (id) ON DELETE CASCADE
+            )
+        ");
+        
+        // Bills table
+        $conn->exec("
+            CREATE TABLE IF NOT EXISTS bills (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                appointment_id INTEGER NOT NULL,
+                patient_name TEXT NOT NULL,
+                hospital_name TEXT NOT NULL,
+                total_amount DECIMAL(10,2) NOT NULL,
+                consultation_fee DECIMAL(10,2) NOT NULL,
+                medicine_cost DECIMAL(10,2) DEFAULT 0,
+                other_charges DECIMAL(10,2) DEFAULT 0,
+                payment_status TEXT DEFAULT 'pending',
+                generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (appointment_id) REFERENCES appointments (id) ON DELETE CASCADE
+            )
+        ");
+        
+        error_log("SQLite database tables created/verified successfully");
+        
+    } catch (PDOException $e) {
+        throw new Exception("Failed to create tables: " . $e->getMessage());
     }
 }
 
-// Initialize tables if needed
-initializeTables($conn);
+// Database functions
+function executeQuery($conn, $sql, $params = []) {
+    try {
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($params);
+        return $stmt;
+    } catch (PDOException $e) {
+        throw new Exception("Query execution failed: " . $e->getMessage());
+    }
+}
+
+function fetchAll($stmt) {
+    return $stmt->fetchAll();
+}
+
+function fetchOne($stmt) {
+    return $stmt->fetch();
+}
+
+function lastInsertId($conn) {
+    return $conn->lastInsertId();
+}
 
 ?>
