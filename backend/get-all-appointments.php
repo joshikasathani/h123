@@ -1,6 +1,6 @@
 <?php
 // Get All Appointments API
-require_once '../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json');
 
@@ -14,26 +14,22 @@ try {
             LEFT JOIN payments p ON a.id = p.appointment_id";
     
     $params = [];
-    $types = "";
     $whereClauses = [];
     
     // Add filters if provided
     if (isset($_GET['hospital_id']) && !empty($_GET['hospital_id'])) {
         $whereClauses[] = "a.hospital_id = ?";
         $params[] = (int)$_GET['hospital_id'];
-        $types .= "i";
     }
     
     if (isset($_GET['status']) && !empty($_GET['status'])) {
         $whereClauses[] = "a.status = ?";
         $params[] = $_GET['status'];
-        $types .= "s";
     }
     
     if (isset($_GET['treatment_status']) && !empty($_GET['treatment_status'])) {
         $whereClauses[] = "a.treatment_status = ?";
         $params[] = $_GET['treatment_status'];
-        $types .= "s";
     }
     
     // Add WHERE clause if there are filters
@@ -44,11 +40,7 @@ try {
     // Order by date and time
     $sql .= " ORDER BY a.appointment_date DESC, a.appointment_time DESC";
     
-    if (!empty($params)) {
-        $stmt = executeQuery($conn, $sql, $params, $types);
-    } else {
-        $stmt = executeQuery($conn, $sql);
-    }
+    $stmt = !empty($params) ? executeQuery($conn, $sql, $params) : executeQuery($conn, $sql);
     
     $appointments = fetchAll($stmt);
     
@@ -64,6 +56,4 @@ try {
         'message' => 'Error fetching appointments: ' . $e->getMessage()
     ]);
 }
-
-$conn->close();
 ?>

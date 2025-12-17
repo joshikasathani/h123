@@ -35,7 +35,7 @@ function logSuccess($message) {
 // Main logic
 try {
     // Get database connection
-    require_once '../config/database.php';
+    require_once __DIR__ . '/../config/database.php';
     
     if (!isset($conn)) {
         throw new Exception("Database connection failed: Connection not initialized");

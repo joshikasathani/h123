@@ -63,48 +63,63 @@
             hospitalsGrid.innerHTML = '';
             noResults.style.display = 'none';
             
-            // Use demo data for Vercel deployment
-            setTimeout(() => {
-                loading.style.display = 'none';
-                
-                // Demo hospital data
-                const demoHospitals = [
-                    {
-                        id: 1,
-                        hospital_name: "City General Hospital",
-                        email: "info@citygeneral.com",
-                        phone: "+1-555-0101",
-                        address: "123 Main St, City, State 12345",
-                        specialization: "General Medicine, Emergency Care"
-                    },
-                    {
-                        id: 2,
-                        hospital_name: "Heart & Vascular Center",
-                        email: "contact@heartcenter.com", 
-                        phone: "+1-555-0102",
-                        address: "456 Oak Ave, City, State 12345",
-                        specialization: "Cardiology, Vascular Surgery"
-                    },
-                    {
-                        id: 3,
-                        hospital_name: "Children's Medical Center",
-                        email: "info@childrensmed.com",
-                        phone: "+1-555-0103", 
-                        address: "789 Park Dr, City, State 12345",
-                        specialization: "Pediatrics, Neonatal Care"
-                    },
-                    {
-                        id: 4,
-                        hospital_name: "Orthopedic & Sports Medicine",
-                        email: "appointments@orthosports.com",
-                        phone: "+1-555-0104",
-                        address: "321 Sports Blvd, City, State 12345", 
-                        specialization: "Orthopedics, Sports Medicine"
+            const demoHospitals = [
+                {
+                    id: 1,
+                    hospital_name: "City General Hospital",
+                    email: "info@citygeneral.com",
+                    phone: "+1-555-0101",
+                    address: "123 Main St, City, State 12345",
+                    specialization: "General Medicine, Emergency Care"
+                },
+                {
+                    id: 2,
+                    hospital_name: "Heart & Vascular Center",
+                    email: "contact@heartcenter.com", 
+                    phone: "+1-555-0102",
+                    address: "456 Oak Ave, City, State 12345",
+                    specialization: "Cardiology, Vascular Surgery"
+                },
+                {
+                    id: 3,
+                    hospital_name: "Children's Medical Center",
+                    email: "info@childrensmed.com",
+                    phone: "+1-555-0103", 
+                    address: "789 Park Dr, City, State 12345",
+                    specialization: "Pediatrics, Neonatal Care"
+                },
+                {
+                    id: 4,
+                    hospital_name: "Orthopedic & Sports Medicine",
+                    email: "appointments@orthosports.com",
+                    phone: "+1-555-0104",
+                    address: "321 Sports Blvd, City, State 12345", 
+                    specialization: "Orthopedics, Sports Medicine"
+                }
+            ];
+
+            fetch('backend/get-hospitals.php')
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = 'none';
+                    if (data.success && data.hospitals && data.hospitals.length > 0) {
+                        const hospitals = data.hospitals.map(h => ({
+                            id: h.id,
+                            hospital_name: h.hospital_name,
+                            email: h.email,
+                            phone: h.phone_number,
+                            address: h.address,
+                            specialization: h.specialization
+                        }));
+                        displayHospitals(hospitals);
+                    } else {
+                        displayHospitals(demoHospitals);
                     }
-                ];
-                
-                displayHospitals(demoHospitals);
-            }, 1000);
+                })
+                .catch(() => {
+                    loading.style.display = 'none';
+                    displayHospitals(demoHospitals);
+                });
         }
 
         function displayHospitals(hospitals) {

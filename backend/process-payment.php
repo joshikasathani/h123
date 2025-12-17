@@ -1,6 +1,6 @@
 <?php
 // Payment Processing Backend
-require_once '../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json');
 
@@ -45,8 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Check if appointment exists and treatment is completed
     if (empty($errors)) {
-        $stmt = executeQuery($conn, "SELECT id, treatment_status FROM appointments WHERE id = ?", [$appointmentId], "i");
-        $appointment = fetchOne($stmt);
+        $stmt = $conn->prepare("SELECT id, treatment_status FROM appointments WHERE id = ?");
+        $stmt->execute([$appointmentId]);
+        $appointment = $stmt->fetch();
         
         if (!$appointment) {
             $errors[] = 'Appointment not found';
@@ -57,8 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Check if payment already exists for this appointment
     if (empty($errors)) {
-        $stmt = executeQuery($conn, "SELECT id FROM payments WHERE appointment_id = ?", [$appointmentId], "i");
-        $existingPayment = fetchOne($stmt);
+        $stmt = $conn->prepare("SELECT id FROM payments WHERE appointment_id = ?");
+        $stmt->execute([$appointmentId]);
+        $existingPayment = $stmt->fetch();
         
         if ($existingPayment) {
             $errors[] = 'Payment has already been processed for this appointment';
@@ -71,7 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sql = "INSERT INTO payments 
                     (appointment_id, hospital_id, patient_name, total_amount, admin_amount, hospital_amount, 
                      admin_percentage, hospital_percentage, payment_method, payment_status, payment_date) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'paid', CURDATE())";
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'paid', ?)";
+
+            $paymentDate = date('Y-m-d');
             
             $params = [
                 $appointmentId, 
@@ -82,11 +86,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $hospitalAmount, 
                 $adminPercentage, 
                 $hospitalPercentage, 
-                $paymentMethod
+                $paymentMethod,
+                $paymentDate
             ];
-            $types = "iisdddds";
             
-            $stmt = executeQuery($conn, $sql, $params, $types);
+            $stmt = $conn->prepare($sql);
+            $stmt->execute($params);
             
             if ($stmt) {
                 // Log payment details
@@ -122,6 +127,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'message' => 'Invalid request method'
     ]);
 }
-
-$conn->close();
 ?>

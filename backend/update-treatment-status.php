@@ -1,6 +1,6 @@
 <?php
 // Update Treatment Status Backend
-require_once '../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json');
 
@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Check if appointment exists
     if (empty($errors)) {
-        $stmt = executeQuery($conn, "SELECT id FROM appointments WHERE id = ?", [$appointmentId], "i");
+        $stmt = executeQuery($conn, "SELECT id FROM appointments WHERE id = ?", [$appointmentId]);
         $appointment = fetchOne($stmt);
         
         if (!$appointment) {
@@ -37,10 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $sql = "UPDATE appointments SET treatment_status = ? WHERE id = ?";
             
-            $params = [$treatmentStatus, $appointmentId];
-            $types = "si";
-            
-            $stmt = executeQuery($conn, $sql, $params, $types);
+            $stmt = executeQuery($conn, $sql, [$treatmentStatus, $appointmentId]);
             
             if ($stmt) {
                 echo json_encode([
@@ -73,6 +70,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'message' => 'Invalid request method'
     ]);
 }
-
-$conn->close();
 ?>

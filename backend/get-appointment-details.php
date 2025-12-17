@@ -1,6 +1,6 @@
 <?php
 // Get Appointment Details API
-require_once '../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json');
 
@@ -15,8 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
                     JOIN hospitals h ON a.hospital_id = h.id
                     WHERE a.id = ?";
             
-            $stmt = executeQuery($conn, $sql, [$appointmentId], "i");
-            $appointment = fetchOne($stmt);
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$appointmentId]);
+            $appointment = $stmt->fetch();
             
             if ($appointment) {
                 echo json_encode([
@@ -48,6 +49,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
         'message' => 'Invalid request'
     ]);
 }
-
-$conn->close();
 ?>

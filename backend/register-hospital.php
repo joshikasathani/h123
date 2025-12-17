@@ -35,7 +35,7 @@ function logSuccess($message) {
 // Database connection with error handling
 function getDatabaseConnection() {
     try {
-        require_once '../config/database.php';
+        require_once __DIR__ . '/../config/database.php';
 
         if (!isset($conn)) {
             throw new Exception("Database connection failed: Connection not initialized");
@@ -153,8 +153,8 @@ try {
     $emailError = '';
     
     try {
-        if (file_exists('../config/email.php')) {
-            require_once '../config/email.php';
+        if (file_exists(__DIR__ . '/../config/email.php')) {
+            require_once __DIR__ . '/../config/email.php';
             
             if (function_exists('sendEmail')) {
                 $subject = "Welcome to Hospital Booking System - Registration Successful";

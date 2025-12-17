@@ -5,9 +5,19 @@
  */
 
 // Database Configuration
+$default_db_path = __DIR__ . '/../data/hospital_booking.db';
+$env_db_path = getenv('SQLITE_DB_PATH');
+$db_path = $env_db_path ? $env_db_path : $default_db_path;
+
+// If the selected folder isn't writable (common on serverless), fall back to /tmp.
+$db_dir = dirname($db_path);
+if (!is_dir($db_dir) || !is_writable($db_dir)) {
+    $db_path = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'hospital_booking.db';
+}
+
 $db_config = [
     'type' => 'sqlite',
-    'database_path' => __DIR__ . '/../data/hospital_booking.db',
+    'database_path' => $db_path,
     'charset' => 'utf8'
 ];
 
@@ -43,6 +53,17 @@ try {
 // Create tables function
 function createTables($conn) {
     try {
+        // Helper: add missing columns for existing DBs (non-destructive migrations)
+        $ensureColumn = function($table, $column, $definition) use ($conn) {
+            $cols = $conn->query("PRAGMA table_info($table)")->fetchAll();
+            foreach ($cols as $c) {
+                if (isset($c['name']) && $c['name'] === $column) {
+                    return;
+                }
+            }
+            $conn->exec("ALTER TABLE $table ADD COLUMN $column $definition");
+        };
+
         // Hospitals table
         $conn->exec("
             CREATE TABLE IF NOT EXISTS hospitals (
@@ -54,9 +75,13 @@ function createTables($conn) {
                 specialization TEXT NOT NULL,
                 available_days TEXT NOT NULL,
                 available_timings TEXT NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ");
+
+        // Ensure updated_at exists for older DBs
+        $ensureColumn('hospitals', 'updated_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
         
         // Appointments table
         $conn->exec("
@@ -64,28 +89,62 @@ function createTables($conn) {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 hospital_id INTEGER NOT NULL,
                 patient_name TEXT NOT NULL,
-                patient_phone TEXT NOT NULL,
+                phone_number TEXT NOT NULL,
                 appointment_date DATE NOT NULL,
                 appointment_time TIME NOT NULL,
                 status TEXT DEFAULT 'pending',
+                treatment_status TEXT DEFAULT 'pending',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (hospital_id) REFERENCES hospitals (id) ON DELETE CASCADE
             )
         ");
+
+        // If DB was created with patient_phone, keep it but also add phone_number and backfill.
+        try {
+            $ensureColumn('appointments', 'phone_number', 'TEXT');
+            $conn->exec("UPDATE appointments SET phone_number = patient_phone WHERE phone_number IS NULL AND patient_phone IS NOT NULL");
+        } catch (Exception $e) {
+            // ignore
+        }
+
+        $ensureColumn('appointments', 'treatment_status', "TEXT DEFAULT 'pending'");
+        $ensureColumn('appointments', 'updated_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
         
         // Payments table
         $conn->exec("
             CREATE TABLE IF NOT EXISTS payments (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 appointment_id INTEGER NOT NULL,
-                amount DECIMAL(10,2) NOT NULL,
-                payment_method TEXT NOT NULL,
+                hospital_id INTEGER NOT NULL,
+                patient_name TEXT NOT NULL,
+                total_amount DECIMAL(10,2) NOT NULL,
+                admin_amount DECIMAL(10,2) NOT NULL,
+                hospital_amount DECIMAL(10,2) NOT NULL,
+                admin_percentage DECIMAL(5,2) DEFAULT 10.00,
+                hospital_percentage DECIMAL(5,2) DEFAULT 90.00,
+                payment_method TEXT DEFAULT 'cash',
                 payment_status TEXT DEFAULT 'pending',
-                transaction_id TEXT,
+                payment_date DATE,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (appointment_id) REFERENCES appointments (id) ON DELETE CASCADE
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (appointment_id) REFERENCES appointments (id) ON DELETE CASCADE,
+                FOREIGN KEY (hospital_id) REFERENCES hospitals (id) ON DELETE CASCADE
             )
         ");
+
+        // Ensure key columns exist for older DBs
+        $ensureColumn('payments', 'hospital_id', 'INTEGER');
+        $ensureColumn('payments', 'patient_name', 'TEXT');
+        $ensureColumn('payments', 'total_amount', 'DECIMAL(10,2)');
+        $ensureColumn('payments', 'admin_amount', 'DECIMAL(10,2)');
+        $ensureColumn('payments', 'hospital_amount', 'DECIMAL(10,2)');
+        $ensureColumn('payments', 'admin_percentage', 'DECIMAL(5,2) DEFAULT 10.00');
+        $ensureColumn('payments', 'hospital_percentage', 'DECIMAL(5,2) DEFAULT 90.00');
+        $ensureColumn('payments', 'payment_method', "TEXT DEFAULT 'cash'");
+        $ensureColumn('payments', 'payment_status', "TEXT DEFAULT 'pending'");
+        $ensureColumn('payments', 'payment_date', 'DATE');
+        $ensureColumn('payments', 'updated_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
         
         // Admin revenue table
         $conn->exec("

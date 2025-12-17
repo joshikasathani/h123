@@ -41,7 +41,7 @@ try {
     // Get and sanitize form data
     $hospitalId = filter_input(INPUT_POST, 'hospital_id', FILTER_VALIDATE_INT);
     $patientName = trim($_POST['patient_name'] ?? '');
-    $patientPhone = trim($_POST['patient_phone'] ?? '');
+    $patientPhone = trim($_POST['phone_number'] ?? ($_POST['patient_phone'] ?? ''));
     $appointmentDate = trim($_POST['appointment_date'] ?? '');
     $appointmentTime = trim($_POST['appointment_time'] ?? '');
     
@@ -96,7 +96,7 @@ try {
     }
     
     // Get database connection
-    require_once '../config/database.php';
+    require_once __DIR__ . '/../config/database.php';
     
     if (!isset($conn)) {
         throw new Exception("Database connection failed: Connection not initialized");
@@ -118,7 +118,7 @@ try {
     }
     
     // Insert appointment
-    $sql = "INSERT INTO appointments (hospital_id, patient_name, patient_phone, appointment_date, appointment_time) 
+    $sql = "INSERT INTO appointments (hospital_id, patient_name, phone_number, appointment_date, appointment_time) 
             VALUES (?, ?, ?, ?, ?)";
     
     $stmt = executeQuery($conn, $sql, [$hospitalId, $patientName, $patientPhone, $appointmentDate, $appointmentTime]);

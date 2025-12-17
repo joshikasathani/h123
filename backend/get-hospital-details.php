@@ -1,6 +1,6 @@
 <?php
 // Get Hospital Details API
-require_once '../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json');
 
@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
                     FROM hospitals 
                     WHERE id = ?";
             
-            $stmt = executeQuery($conn, $sql, [$hospitalId], "i");
+            $stmt = executeQuery($conn, $sql, [$hospitalId]);
             $hospital = fetchOne($stmt);
             
             if ($hospital) {
@@ -46,6 +46,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
         'message' => 'Invalid request'
     ]);
 }
-
-$conn->close();
 ?>

@@ -1,6 +1,6 @@
 <?php
 // Dashboard Statistics API
-require_once '../config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json');
 
@@ -11,9 +11,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
-        $conn = getConnection();
-        
-        if (!$conn) {
+        if (!isset($conn)) {
             throw new Exception('Database connection failed');
         }
         
@@ -30,13 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $totalAppointments = $result['total'] ?? 0;
         
         // Get today's appointments
-        $sql = "SELECT COUNT(*) as total FROM appointments WHERE DATE(appointment_date) = CURDATE()";
+        $sql = "SELECT COUNT(*) as total FROM appointments WHERE DATE(appointment_date) = DATE('now')";
         $stmt = executeQuery($conn, $sql);
         $result = fetchOne($stmt);
         $todayAppointments = $result['total'] ?? 0;
         
-        // Get completed appointments
-        $sql = "SELECT COUNT(*) as total FROM appointments WHERE status = 'completed'";
+        // Get completed appointments (treatment completed)
+        $sql = "SELECT COUNT(*) as total FROM appointments WHERE treatment_status = 'completed'";
         $stmt = executeQuery($conn, $sql);
         $result = fetchOne($stmt);
         $completedAppointments = $result['total'] ?? 0;
@@ -48,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $pendingAppointments = $result['total'] ?? 0;
         
         // Get total revenue from payments
-        $sql = "SELECT SUM(amount) as total FROM payments WHERE status = 'completed'";
+        $sql = "SELECT SUM(total_amount) as total FROM payments WHERE payment_status = 'paid'";
         $stmt = executeQuery($conn, $sql);
         $result = fetchOne($stmt);
         $totalRevenue = $result['total'] ?? 0;
@@ -66,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Get weekly appointments data
         $sql = "SELECT DATE(appointment_date) as date, COUNT(*) as count 
                 FROM appointments 
-                WHERE appointment_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+                WHERE DATE(appointment_date) >= DATE('now','-7 day')
                 GROUP BY DATE(appointment_date) 
                 ORDER BY date";
         $stmt = executeQuery($conn, $sql);
