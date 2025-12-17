@@ -37,13 +37,8 @@ try {
     // Get database connection
     require_once '../config/database.php';
     
-    if (!isset($conn) || $conn->connect_error) {
-        throw new Exception("Database connection failed: " . ($conn->connect_error ?? 'Connection not initialized'));
-    }
-    
-    // Select database
-    if (!$conn->select_db('hospital_booking')) {
-        throw new Exception("Cannot select database 'hospital_booking'");
+    if (!isset($conn)) {
+        throw new Exception("Database connection failed: Connection not initialized");
     }
     
     // Fetch hospitals
@@ -62,8 +57,7 @@ try {
         'count' => count($hospitals)
     ]);
     
-    $conn->close();
-    
+        
 } catch (Exception $e) {
     logError("Error fetching hospitals: " . $e->getMessage());
     
