@@ -98,20 +98,13 @@ try {
     // Get database connection
     require_once '../config/database.php';
     
-    if (!isset($conn) || $conn->connect_error) {
-        throw new Exception("Database connection failed: " . ($conn->connect_error ?? 'Connection not initialized'));
+    if (!isset($conn)) {
+        throw new Exception("Database connection failed: Connection not initialized");
     }
     
     // Check if hospital exists
-    $stmt = $conn->prepare("SELECT hospital_name, phone_number, email FROM hospitals WHERE id = ?");
-    if (!$stmt) {
-        throw new Exception("Failed to prepare hospital check query: " . $conn->error);
-    }
-    
-    $stmt->bind_param("i", $hospitalId);
-    $stmt->execute();
-    $hospital = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
+    $stmt = executeQuery($conn, "SELECT hospital_name, phone_number, email FROM hospitals WHERE id = ?", [$hospitalId]);
+    $hospital = fetchOne($stmt);
     
     if (!$hospital) {
         $errors[] = 'Selected hospital not found';
@@ -128,20 +121,9 @@ try {
     $sql = "INSERT INTO appointments (hospital_id, patient_name, patient_phone, appointment_date, appointment_time) 
             VALUES (?, ?, ?, ?, ?)";
     
-    $stmt = $conn->prepare($sql);
-    if (!$stmt) {
-        throw new Exception("Failed to prepare insert query: " . $conn->error);
-    }
+    $stmt = executeQuery($conn, $sql, [$hospitalId, $patientName, $patientPhone, $appointmentDate, $appointmentTime]);
     
-    $stmt->bind_param("issss", $hospitalId, $patientName, $patientPhone, $appointmentDate, $appointmentTime);
-    
-    if (!$stmt->execute()) {
-        throw new Exception("Failed to insert appointment: " . $stmt->error);
-    }
-    
-    $appointmentId = $conn->insert_id;
-    $stmt->close();
-    $conn->close();
+    $appointmentId = lastInsertId($conn);
     
     logSuccess("Appointment booked successfully. ID: $appointmentId, Hospital: {$hospital['hospital_name']}");
     

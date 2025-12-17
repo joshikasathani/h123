@@ -36,24 +36,13 @@ function logSuccess($message) {
 function getDatabaseConnection() {
     try {
         require_once '../config/database.php';
-        
-        if (!isset($conn) || $conn->connect_error) {
-            throw new Exception("Database connection failed: " . ($conn->connect_error ?? 'Connection not initialized'));
+
+        if (!isset($conn)) {
+            throw new Exception("Database connection failed: Connection not initialized");
         }
-        
-        // Test if database exists
-        $result = $conn->query("SHOW DATABASES LIKE 'hospital_booking'");
-        if ($result->num_rows === 0) {
-            throw new Exception("Database 'hospital_booking' does not exist");
-        }
-        
-        // Select database
-        if (!$conn->select_db('hospital_booking')) {
-            throw new Exception("Cannot select database 'hospital_booking'");
-        }
-        
+
         return $conn;
-        
+
     } catch (Exception $e) {
         logError("Database connection error: " . $e->getMessage());
         throw $e;
@@ -135,16 +124,10 @@ try {
     $conn = getDatabaseConnection();
     
     // Check for duplicate email
-    $stmt = $conn->prepare("SELECT id FROM hospitals WHERE email = ?");
-    if (!$stmt) {
-        throw new Exception("Failed to prepare duplicate check query: " . $conn->error);
-    }
+    $stmt = executeQuery($conn, "SELECT id FROM hospitals WHERE email = ?", [$email]);
+    $result = fetchAll($stmt);
     
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result->num_rows > 0) {
+    if (count($result) > 0) {
         $errors[] = 'A hospital with this email already exists';
         logError("Duplicate email attempt: $email");
         echo json_encode([
@@ -154,26 +137,14 @@ try {
         ]);
         exit;
     }
-    $stmt->close();
     
     // Insert hospital record
     $sql = "INSERT INTO hospitals (hospital_name, address, phone_number, email, specialization, available_days, available_timings) 
             VALUES (?, ?, ?, ?, ?, ?, ?)";
     
-    $stmt = $conn->prepare($sql);
-    if (!$stmt) {
-        throw new Exception("Failed to prepare insert query: " . $conn->error);
-    }
+    $stmt = executeQuery($conn, $sql, [$hospitalName, $address, $phoneNumber, $email, $specialization, $availableDays, $availableTimings]);
     
-    $stmt->bind_param("sssssss", $hospitalName, $address, $phoneNumber, $email, $specialization, $availableDays, $availableTimings);
-    
-    if (!$stmt->execute()) {
-        throw new Exception("Failed to insert hospital record: " . $stmt->error);
-    }
-    
-    $hospitalId = $conn->insert_id;
-    $stmt->close();
-    $conn->close();
+    $hospitalId = lastInsertId($conn);
     
     logSuccess("Hospital registered successfully. ID: $hospitalId, Name: $hospitalName");
     
